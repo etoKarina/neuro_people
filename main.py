@@ -1,18 +1,12 @@
 from sklearn.neural_network import MLPRegressor  # импорт нейросети
 from sklearn.model_selection import train_test_split  # функция для разделения выборки на обучающую и тестовую
-from neupy import algorithms
-from sklearn import preprocessing
-from sklearn.preprocessing import StandardScaler
 
 import pandas as pd  # импорт pandas
 import numpy as np
-from keras.models import Sequential
+
 import matplotlib.pyplot as plt
 
 FEATURE_COLS = ['people', 'people_1', 'people_2', 'families', 'death']
-
-
-# FEATURE_COLS = ['people', 'families', 'death']
 
 
 # загрузка данных из excel
@@ -54,55 +48,11 @@ def MLP(X, y):
     return regr
 
 
-def lisp(X, y):
-    from sklearn.preprocessing import MinMaxScaler
-    from keras.models import Sequential
-    from keras.layers import Dense, LSTM, InputLayer
-    from keras.preprocessing.sequence import TimeseriesGenerator
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=1)  # разделение выборки на обучающую и тестовую
-
-    n_input, n_features = X_train.shape
-    lstm_model = Sequential()
-    lstm_model.add(InputLayer(input_shape=(5,)))
-    lstm_model.add(LSTM(5))  # !!!!!
-    lstm_model.add(Dense(1))
-    lstm_model.compile(optimizer='adam', loss='mse')
-    lstm_model.fit(X_train.values, y_train.values)
-
-    return lstm_model
-
-
-def neupy_lstm(X, y):
-    from neupy.layers import join,Input,LSTM,Sigmoid, Embedding
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=1)  # разделение выборки на обучающую и тестовую
-
-    n_input, n_features = X_train.shape
-
-    network = join(
-        Input(n_input),
-        Embedding(n_features, 1),
-        LSTM(20),
-        Sigmoid(1), )
-    alg = algorithms.Momentum(network=network)
-    alg.fit(X_train, y_train)
-    y_predicted = alg.predict(X_test).flatten()
-    err = 1 - np.sum((y_predicted - y_test) ** 2) / np.sum((y_test - y_test.mean()) ** 2)  # R2 error
-    print(f'LSTM score:{err}')
-    return alg
-
-
-
-
-
 def grnn(X, y):
     from neupy import algorithms
 
     x_train, x_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    nw = algorithms.GRNN(std=1000, verbose=False)
+    nw = algorithms.GRNN(std=1000, verbose=False)  # алгоритм зависит только от параметров и тренировочной выборки
     nw.train(x_train, y_train)
     y_predicted = nw.predict(x_test).flatten()
     err = 1 - np.sum((y_predicted - y_test) ** 2) / np.sum((y_test - y_test.mean()) ** 2)  # R2 error
@@ -113,14 +63,18 @@ def grnn(X, y):
 if __name__ == '__main__':
     df = get_df_data()
     X, y, X_for_predict = extract_X_y(df.copy())
+
     plt.plot(df['year'], df['people'], 'b', label='people')
-    df = df.append(pd.DataFrame({'year': [2020]}))
-    predictors = {'grnn': (grnn(X, y), 'g'), 'MLP': (MLP(X, y), 'r')}
-    for name, (alg, colour) in predictors.items():
+
+    df = df.append(pd.DataFrame({'year': [2020]}))  # добавляет строку с 2020 в датафрейм
+    predictors = [('grnn', grnn(X, y), 'g'),
+                  ('MLP', MLP(X, y), 'r')]
+
+    for name, alg, colour in predictors:  # цикл который рисует график
         df[name] = np.append(alg.predict(df[FEATURE_COLS].dropna().values),
-                             [np.nan, ] * 3)
-        df[name] = df[name].shift(3)
-        plt.plot(df['year'], df[name], colour, label=name)
+                             [np.nan, ] * 3)  # предсказание
+        df[name] = df[name].shift(3)  # сдвиг предсказания на 3
+        plt.plot(df['year'], df[name], colour, label=name)  # нарисовать график предсказания
         print(f'prediction:{alg.predict(X_for_predict)}')
     plt.legend()
     plt.show()
