@@ -1,4 +1,7 @@
 from sklearn.neural_network import MLPRegressor  # импорт нейросети
+from sklearn.linear_model import LinearRegression,LogisticRegression
+from sklearn.svm import SVR,LinearSVR
+from sklearn.tree import DecisionTreeRegressor,ExtraTreeRegressor
 from sklearn.model_selection import train_test_split  # функция для разделения выборки на обучающую и тестовую
 
 import pandas as pd  # импорт pandas
@@ -60,6 +63,16 @@ def grnn(X, y):
     return nw
 
 
+def linearSVR(X,y):
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=1)  # разделение выборки на обучающую и тестовую
+    regr = LinearSVR().fit(X_train,y_train)  # обучение алгоритрма
+    print(f'linearSVR score:{regr.score(X_test, y_test)}')  # Точность предсказания
+    return regr
+
+
+
 if __name__ == '__main__':
     df = get_df_data()
     X, y, X_for_predict = extract_X_y(df.copy())
@@ -68,7 +81,8 @@ if __name__ == '__main__':
 
     df = df.append(pd.DataFrame({'year': [2020]}))  # добавляет строку с 2020 в датафрейм
     predictors = [('grnn', grnn(X, y), 'g'),
-                  ('MLP', MLP(X, y), 'r')]
+                  ('MLP', MLP(X, y), 'r'),
+                  ('linearSVR',linearSVR(X,y),'y')]
 
     for name, alg, colour in predictors:  # цикл который рисует график
         df[name] = np.append(alg.predict(df[FEATURE_COLS].dropna().values),
