@@ -1,11 +1,11 @@
 from sklearn.neural_network import MLPRegressor  # импорт нейросети
-from sklearn.linear_model import LinearRegression,LogisticRegression
 from sklearn.svm import SVR,LinearSVR
-from sklearn.tree import DecisionTreeRegressor,ExtraTreeRegressor
 from sklearn.model_selection import train_test_split  # функция для разделения выборки на обучающую и тестовую
 
 import pandas as pd  # импорт pandas
 import numpy as np
+
+import os
 
 import matplotlib.pyplot as plt
 
@@ -14,8 +14,10 @@ FEATURE_COLS = ['people', 'people_1', 'people_2', 'families', 'death']
 
 # загрузка данных из excel
 def get_df_data():
+    assert os.path.isfile('test.xlsx'), 'Ошибка! Файла не существует'
     excel_data_df = pd.read_excel('test.xlsx', sheet_name='Отчет', skiprows=3, header=None,
                                   names=['year', 'B', 'people', 'families', 'death'])
+    assert not excel_data_df.empty, 'Ошибка! Данные в файле отсутствуют'
 
     excel_data_df.drop('B', axis=1, inplace=True)  # убираем лишнюю колонку
     excel_data_df['year'] = excel_data_df['year'].str.split(' ').str.get(0).astype(
@@ -43,6 +45,7 @@ def extract_X_y(df):
 
 
 def MLP(X, y):
+    assert not (X.empty and y.empty), 'Ошибка! Х и у не могут быть пустыми'
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=1)  # разделение выборки на обучающую и тестовую
     regr = MLPRegressor(random_state=1, max_iter=500, hidden_layer_sizes=(5, 7, 4)).fit(X_train,
@@ -52,6 +55,7 @@ def MLP(X, y):
 
 
 def grnn(X, y):
+    assert not (X.empty and y.empty), 'Ошибка! Х и у не могут быть пустыми'
     from neupy import algorithms
 
     x_train, x_test, y_train, y_test = train_test_split(X, y, random_state=1)
@@ -64,7 +68,7 @@ def grnn(X, y):
 
 
 def linearSVR(X,y):
-
+    assert not (X.empty and y.empty), 'Ошибка! Х и у не могут быть пустыми'
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=1)  # разделение выборки на обучающую и тестовую
     regr = LinearSVR().fit(X_train,y_train)  # обучение алгоритрма
